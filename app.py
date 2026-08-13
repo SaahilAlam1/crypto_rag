@@ -14,7 +14,7 @@ from rag.qa import ask
 
 st.set_page_config(page_title="Crypto News RAG", page_icon="📰", layout="wide")
 st.title("Crypto News ETL + RAG Insight Service")
-st.caption("Ingest crypto/finance news → PostgreSQL → FAISS retrieval → LLM answers")
+st.caption("Ingest crypto/finance news → PostgreSQL → FAISS retrieval → DeepSeek LLM answers")
 
 tab_ask, tab_analytics, tab_etl = st.tabs(["Ask Questions", "Analytics", "ETL Pipeline"])
 
@@ -26,7 +26,7 @@ with tab_ask:
     )
     top_k = st.slider("Articles to retrieve", 3, 10, 5)
     if st.button("Ask", type="primary") and question:
-        with st.spinner("Searching articles and generating answer..."):
+        with st.spinner("Searchines and generating answer..."):
             result = ask(question, top_k=top_k)
         st.markdown("### Answer")
         st.write(result["answer"])

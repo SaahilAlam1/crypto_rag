@@ -83,24 +83,35 @@ def fetch_articles(
 
     for category in categories:
         for page in range(1, max_pages_per_category + 1):
-            payload = fetch_page(category=category, page=page)
-            raw_articles = payload.get("articles") or []
-            if not raw_articles:
+            try:
+                payload = fetch_page(category=category, page=page)
+                raw_articles = payload.get("articles") or []
+                if not raw_articles:
+                    break
+
+                for raw in raw_articles:
+                    normalized = normalize_article(raw)
+                    url = normalized["url"]
+                    if not url or url in seen_urls:
+                        continue
+                    seen_urls.add(url)
+                    articles.append(normalized)
+
+                pagination = payload.get("pagination") or {}
+                if not pagination.get("hasMore", False):
+                    break
+            except Exception as e:
+                print(f"Error fetching {category} page {page}: {e}")
                 break
 
-            for raw in raw_articles:
-                normalized = normalize_article(raw)
-                url = normalized["url"]
-                if not url or url in seen_urls:
-                    continue
-                seen_urls.add(url)
-                articles.append(normalized)
-
-            pagination = payload.get("pagination") or {}
-            if not pagination.get("hasMore", False):
-                break
-
+    print(f"✅ Fetched {len(articles)} articles")
     return articles
+
+
+# Alias for backwards compatibility
+def fetch_news(max_pages: int = 5) -> list[dict[str, Any]]:
+    """Alias for fetch_articles."""
+    return fetch_articles(max_pages_per_category=max_pages)
 
 
 if __name__ == "__main__":

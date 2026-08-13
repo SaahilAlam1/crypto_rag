@@ -198,19 +198,4 @@ Run ETL automatically with cron:
 - **Database**: Indexed queries for fast analytics
 - **UI**: Cached FAISS index for instant startup
 
-## 📝 License
 
-MIT License - free to use for learning and production
-
-## 🙏 Acknowledgments
-
-- News data: [cryptocurrency.cv](https://cryptocurrency.cv)
-- Embeddings: [SentenceTransformers](https://www.sbert.net/)
-- Vector search: [FAISS](https://github.com/facebookresearch/faiss)
-- UI framework: [Streamlit](https://streamlit.io/)
-
-## 📞 Contact
-
-[Your Name] - [Your Email] - [Your LinkedIn]
-
-Project Link: [https://github.com/YOUR_USERNAME/crypto-news-rag](https://github.com/YOUR_USERNAME/crypto-news-rag)

@@ -1,28 +1,29 @@
 # 📰 Crypto News ETL + RAG Insight Service
 
-A data engineering pipeline that ingests cryptocurrency news into PostgreSQL and provides intelligent question-answering through Retrieval-Augmented Generation (RAG).
+A data engineering pipeline that ingests cryptocurrency news into PostgreSQL and provides intelligent question-answering through Retrieval-Augmented Generation (RAG) powered by DeepSeek AI.
 
 ## ✨ Features
 
 - **Automated ETL Pipeline**: Fetches crypto news from multiple categories without requiring API keys
 - **PostgreSQL Storage**: Optimized schema with deduplication and indexing
 - **Vector Search**: FAISS-powered semantic search using SentenceTransformer embeddings
-- **RAG Q&A**: Natural language question-answering over news articles with source attribution
-- **Analytics Dashboard**: Real-time insights on trending tickers, top sources, and article distribution
+- **RAG Q&A**: Natural language question-answering using DeepSeek AI
+- **Live Market Data**: Real-time crypto prices from CoinGecko for ranking queries
+- **Analytics Dashboard**: Insights on trending tickers, top sources, and article distribution
 - **Interactive UI**: Streamlit interface with ETL controls, analytics visualizations, and Q&A chat
 
 ## 🏗️ Architecture
 
 ```
-cryptocurrency.cv API
-        ↓
-ETL Pipeline (Fetch → Clean → Normalize → Load)
-        ↓
-PostgreSQL Database
+cryptocurrency.cv API                    CoinGecko API
+        ↓                                       ↓
+ETL Pipeline (Fetch → Clean → Load)     Market Data
+        ↓                                       ↓
+PostgreSQL Database ←────────────────────────────┘
         ↓
 FAISS Vector Store (SentenceTransformer embeddings)
         ↓
-RAG Q&A Engine (Retrieval + Generation)
+RAG Q&A Engine (Retrieval + DeepSeek Generation)
         ↓
 Streamlit UI (Ask Questions / Analytics / ETL Controls)
 ```
@@ -36,7 +37,8 @@ Streamlit UI (Ask Questions / Analytics / ETL Controls)
 | **ORM** | SQLAlchemy |
 | **Vector Store** | FAISS |
 | **Embeddings** | SentenceTransformers (all-MiniLM-L6-v2) |
-| **LLM** | OpenAI API (with retrieval-only fallback) |
+| **LLM** | DeepSeek API (with retrieval-only fallback) |
+| **Market Data** | CoinGecko API |
 | **UI** | Streamlit |
 | **Data Processing** | Pandas, NumPy |
 
@@ -63,14 +65,14 @@ news_articles (
 ### Prerequisites
 - Python 3.9+
 - PostgreSQL 14+
-- OpenAI API key (optional, for LLM-generated answers)
+- DeepSeek API key (optional, for AI-generated answers)
 
 ### Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/crypto-news-rag.git
-cd crypto-news-rag
+git clone https://github.com/SaahilAlam1/crypto_rag.git
+cd crypto_rag
 
 # Create virtual environment
 python -m venv .venv
@@ -86,7 +88,7 @@ Create a `.env` file:
 
 ```env
 DATABASE_URL=postgresql://crypto_user:your_password_here@localhost:5432/crypto_news_rag
-OPENAI_API_KEY=your_openai_key_here  # Optional
+DEEPSEEK_API_KEY=your_deepseek_api_key_here  # Get at https://platform.deepseek.com
 ```
 
 ### Database Setup
@@ -116,6 +118,7 @@ Open http://localhost:8501 in your browser.
 ### 1. Ask Questions
 - Natural language queries about crypto news
 - Example: "What are the latest Bitcoin developments?"
+- Example: "What are the top 3 cryptos right now?" (uses live CoinGecko data)
 - Returns answer with source URLs for verification
 
 ### 2. Analytics
@@ -125,7 +128,7 @@ Open http://localhost:8501 in your browser.
 
 ### 3. ETL Pipeline
 - Manual trigger for news fetching
-- Adjustable pagination (fetch 1-10 pages)
+- Adjustable pagination (fetch 1-20 pages)
 - Rebuild FAISS index after new data
 
 ## 📈 Sample Analytics
@@ -137,15 +140,16 @@ Open http://localhost:8501 in your browser.
 ## 🤖 RAG Implementation Details
 
 1. **Embedding**: Articles encoded using SentenceTransformer (384-dimensional vectors)
-2. **Indexing**: FAISS IndexFlatL2 for efficient similarity search
+2. **Indexing**: FAISS IndexFlatIP for efficient similarity search
 3. **Retrieval**: Top-k nearest neighbors based on query embedding
-4. **Generation**: Retrieved contexts + user query → LLM → grounded answer
-5. **Fallback**: If no OpenAI key, returns retrieved article snippets
+4. **Generation**: Retrieved contexts + user query → DeepSeek AI → grounded answer
+5. **Market Data**: Live prices from CoinGecko for ranking/price questions
+6. **Fallback**: If no DeepSeek key, returns retrieved article snippets
 
 ## 📁 Project Structure
 
 ```
-crypto-news-rag/
+crypto_rag/
 ├── app.py                 # Streamlit UI (3 tabs)
 ├── etl/
 │   ├── __init__.py
@@ -155,12 +159,13 @@ crypto-news-rag/
 ├── rag/
 │   ├── __init__.py
 │   ├── index.py          # FAISS vector store builder
-│   └── qa.py             # RAG question-answering
+│   ├── qa.py             # RAG question-answering (DeepSeek)
+│   └── market_data.py    # CoinGecko live prices
 ├── analytics/
 │   ├── __init__.py
 │   └── queries.py        # Analytics functions
 ├── requirements.txt
-├── .env
+├── .env.example
 └── README.md
 ```
 
@@ -178,18 +183,9 @@ Run ETL automatically with cron:
 - **Market Intelligence**: Track trending cryptocurrencies in real-time
 - **News Aggregation**: Centralize crypto news from multiple categories
 - **Research Assistant**: Ask questions about recent developments
+- **Price Queries**: Get live rankings with CoinGecko integration
 - **Sentiment Tracking**: Monitor news volume for specific tokens
 
-## 🔮 Future Improvements
-
-- [ ] Sentiment analysis using FinBERT
-- [ ] Real-time news streaming with WebSockets
-- [ ] User authentication and saved queries
-- [ ] REST API with FastAPI
-- [ ] Docker containerization
-- [ ] Multi-language news support
-- [ ] Historical data backfill
-- [ ] News deduplication with fuzzy matching
 
 ## ⚡ Performance
 
@@ -197,5 +193,3 @@ Run ETL automatically with cron:
 - **Vector Search**: Sub-second retrieval with FAISS
 - **Database**: Indexed queries for fast analytics
 - **UI**: Cached FAISS index for instant startup
-
-

@@ -1,7 +1,5 @@
-"""Build and query a FAISS vector index over article texts."""
-
 import json
-import os
+from functools import lru_cache
 from pathlib import Path
 
 import faiss
@@ -12,6 +10,14 @@ from etl.database import NewsArticle, SessionLocal
 
 INDEX_DIR = Path("data/faiss_index")
 MODEL_NAME = "all-MiniLM-L6-v2"
+
+_cache: dict = {"mtime": None, "index": None, "docs": None}
+
+
+@lru_cache(maxsize=1)
+def get_model() -> SentenceTransformer:
+    """Load the embedding model once per process (it was reloaded on every query before)."""
+    return SentenceTransformer(MODEL_NAME)
 
 
 def _article_text(article: NewsArticle) -> str:
@@ -55,9 +61,7 @@ def build_index(force: bool = False) -> dict:
     if not docs:
         return {"status": "empty", "count": 0}
 
-    model = SentenceTransformer(MODEL_NAME)
-    texts = [d["text"] for d in docs]
-    embeddings = model.encode(texts, show_progress_bar=False, convert_to_numpy=True)
+    embeddings = get_model().encode([d["text"] for d in docs], show_progress_bar=False, convert_to_numpy=True)
     embeddings = np.asarray(embeddings, dtype="float32")
     faiss.normalize_L2(embeddings)
 
@@ -66,24 +70,33 @@ def build_index(force: bool = False) -> dict:
 
     faiss.write_index(index, str(index_path))
     meta_path.write_text(json.dumps(docs))
-
+    _cache["mtime"] = None  # force reload on next search
     return {"status": "built", "count": len(docs), "path": str(INDEX_DIR)}
 
 
-def search(query: str, top_k: int = 5) -> list[dict]:
-    """Return top-k similar articles for a query."""
+def _load_index():
+    """Read the index from disk only when the file has changed."""
     index_path = INDEX_DIR / "index.faiss"
     meta_path = INDEX_DIR / "metadata.json"
     if not index_path.exists() or not meta_path.exists():
         build_index(force=True)
         if not index_path.exists():
-            return []
+            return None, None
+    mtime = index_path.stat().st_mtime
+    if _cache["mtime"] != mtime:
+        _cache["index"] = faiss.read_index(str(index_path))
+        _cache["docs"] = json.loads(meta_path.read_text())
+        _cache["mtime"] = mtime
+    return _cache["index"], _cache["docs"]
 
-    model = SentenceTransformer(MODEL_NAME)
-    index = faiss.read_index(str(index_path))
-    docs = json.loads(meta_path.read_text())
 
-    query_vec = model.encode([query], convert_to_numpy=True).astype("float32")
+def search(query: str, top_k: int = 5) -> list[dict]:
+    """Return top-k similar articles for a query."""
+    index, docs = _load_index()
+    if index is None or not docs:
+        return []
+
+    query_vec = get_model().encode([query], convert_to_numpy=True).astype("float32")
     faiss.normalize_L2(query_vec)
     scores, indices = index.search(query_vec, min(top_k, len(docs)))
 
@@ -91,6 +104,5 @@ def search(query: str, top_k: int = 5) -> list[dict]:
     for score, idx in zip(scores[0], indices[0]):
         if idx < 0:
             continue
-        doc = docs[idx]
-        results.append({**doc, "score": float(score)})
+        results.append({**docs[idx], "score": float(score)})
     return results

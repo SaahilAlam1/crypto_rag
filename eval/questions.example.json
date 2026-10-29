@@ -1,0 +1,4 @@
+[
+  {"question": "Which company announced a new Bitcoin ETF filing this week?", "expected_url": "https://example.com/replace-with-a-url-from-your-database"},
+  {"question": "What happened to USDC's peg after the reserve announcement?", "expected_url": "https://example.com/another-url-from-your-database"}
+]

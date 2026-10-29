@@ -51,14 +51,14 @@ with tab_analytics:
             st.markdown("#### Articles per ticker (last 7 days)")
             df_daily = articles_per_ticker_per_day(days=7)
             if not df_daily.empty:
-                st.dataframe(df_daily, use_container_width=True)
+                st.dataframe(df_daily, width='stretch')
             else:
                 st.write("No recent articles with dates.")
 
         with col2:
             st.markdown("#### Top sources")
             df_sources = top_sources(limit=10)
-            st.dataframe(df_sources, use_container_width=True)
+            st.dataframe(df_sources, width='stretch')
 
         st.markdown("#### Recent headlines by ticker")
         ticker = st.text_input("Ticker", value="BTC").upper()
@@ -67,7 +67,7 @@ with tab_analytics:
             if not df_headlines.empty:
                 st.dataframe(
                     df_headlines[["title", "source", "published_at", "url"]],
-                    use_container_width=True,
+                    width='stretch',
                 )
             else:
                 st.write(f"No headlines found for {ticker}.")

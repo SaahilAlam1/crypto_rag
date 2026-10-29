@@ -85,7 +85,7 @@ pip install -r requirements.txt
 Create a `.env` file:
 
 ```env
-DATABASE_URL=postgresql://crypto_user:crypto_password123@localhost:5432/crypto_news_rag
+DATABASE_URL=postgresql://crypto_user:your_password_here@localhost:5432/crypto_news_rag
 OPENAI_API_KEY=your_openai_key_here  # Optional
 ```
 

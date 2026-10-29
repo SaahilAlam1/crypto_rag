@@ -87,7 +87,7 @@ pip install -r requirements.txt
 Create a `.env` file:
 
 ```env
-DATABASE_URL=postgresql://crypto_user:crypto_password123@localhost:5432/crypto_news_rag
+DATABASE_URL=postgresql://crypto_user:your_password_here@localhost:5432/crypto_news_rag
 DEEPSEEK_API_KEY=your_deepseek_api_key_here  # Get at https://platform.deepseek.com
 ```
 
